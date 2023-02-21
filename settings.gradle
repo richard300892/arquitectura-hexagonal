@@ -1,0 +1,5 @@
+rootProject.name = 'arquitectura-hexagonal'
+
+include 'domain'
+include 'application'
+include 'infrastructure'
