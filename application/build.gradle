@@ -1,9 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-group = 'com.asociados.cope'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+group = 'com.alediesme.joyeria'
 
 repositories {
     mavenCentral()
@@ -12,9 +10,13 @@ repositories {
 dependencies {
     implementation project(':domain')
 
-    implementation project.ext.springtxt
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
 
-    compileOnly project.ext.lombok
+    testImplementation project.ext.mockitocore
+    testImplementation project.ext.mockitojupiter
+}
 
-    annotationProcessor project.ext.lombok
+test {
+    useJUnitPlatform()
 }

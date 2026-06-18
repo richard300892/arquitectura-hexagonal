@@ -1,0 +1,4 @@
+-- =====================================================
+-- Tablas de negocio usadas por la API REST actual
+-- Ejecutar conectado como ALEDIESME (despues de crear el usuario)
+-- =====================================================

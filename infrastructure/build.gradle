@@ -18,25 +18,35 @@ apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'eclipse'
 
-group = 'com.asociados.cope'
+group = 'com.alediesme.joyeria'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    configurations {
+        runtime.exclude module: 'spring-boot-starter-tomcat'
+        compile.exclude module: 'spring-boot-starter-tomcat'
+    }
+
     testImplementation project.ext.springboottest
     testImplementation project.ext.mockitocore
     testImplementation project.ext.mockitoinline
     testImplementation project.ext.mockitojupiter
 
+    testRuntimeOnly project.ext.h2
+
     implementation project.ext.springbootweb
     implementation project.ext.springdoc
     implementation project.ext.springbootjdbc
+    implementation project.ext.springbootsecurity
+
+    implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
+
+    implementation project.ext.jjwt
     implementation project.ext.apachecommons
-    implementation project.ext.jpa
 
     implementation project(':domain')
     implementation project(':application')
@@ -59,12 +69,13 @@ pitest {
 
 jacocoTestReport {
     reports {
-        xml.enabled true
-        xml.enabled true
+        xml.required = true
     }
 
     additionalSourceDirs files('../application/src/main/java')
     additionalClassDirs files('../application/build/classes/java/main')
+
+    dependsOn ':application:compileJava'
 }
 
 test {

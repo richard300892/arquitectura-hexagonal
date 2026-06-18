@@ -12,7 +12,28 @@ plugins {
     id 'org.springframework.boot' version "${springBootVersion}"
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+    id 'war'
     id 'info.solidsoft.pitest' version '1.7.4'
+}
+
+def configuredJavaVersion = JavaLanguageVersion.of(
+        Integer.parseInt(findProperty('javaVersion')?.toString() ?: '21')
+)
+
+def configuredJavaRelease = Integer.parseInt(findProperty('javaRelease')?.toString() ?: '17')
+
+def configureJavaToolchain = { Project targetProject ->
+    targetProject.pluginManager.withPlugin('java') {
+        targetProject.java {
+            toolchain {
+                languageVersion = configuredJavaVersion
+            }
+        }
+
+        targetProject.tasks.withType(JavaCompile).configureEach {
+            options.release = configuredJavaRelease
+        }
+    }
 }
 
 allprojects {
@@ -28,18 +49,30 @@ allprojects {
     tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
     tasks.withType(Test) { systemProperty "file.encoding", "UTF-8" }
 
-    project.ext.mockitocore = ['org.mockito:mockito-core:3.11.2']
-    project.ext.mockitoinline = ['org.mockito:mockito-inline:3.11.2']
-    project.ext.mockitojupiter = ['org.mockito:mockito-junit-jupiter:3.11.2']
-    project.ext.lombok = ["org.projectlombok:lombok:1.18.20"]
+    project.ext.mockitocore = ['org.mockito:mockito-core:5.11.0']
+    project.ext.mockitoinline = ['org.mockito:mockito-core:5.11.0']
+    project.ext.mockitojupiter = ['org.mockito:mockito-junit-jupiter:5.11.0']
+    project.ext.lombok = ["org.projectlombok:lombok:1.18.36"]
     project.ext.springboottest = ["org.springframework.boot:spring-boot-starter-test:${springBootVersion}"]
     project.ext.springbootweb = ["org.springframework.boot:spring-boot-starter-web:${springBootVersion}"]
+
+    // WebLogic usa Tyrus WS; tomcat-embed-websocket en el WAR provoca ClassCastException.
+    configurations.configureEach {
+        exclude group: 'org.apache.tomcat.embed', module: 'tomcat-embed-websocket'
+    }
+
     project.ext.springdevtools = ["org.springframework.boot:spring-boot-devtools:${springBootVersion}"]
-    project.ext.springbootundertow = ["org.springframework.boot:spring-boot-starter-undertow:${springBootVersion}"]
     project.ext.springbootjasypt = ['com.github.ulisesbocchio:jasypt-spring-boot-starter:2.1.1']
     project.ext.springbootjdbc = ["org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}"]
-    project.ext.db = ["mysql:mysql-connector-java:8.0.26"]
-    project.ext.jpa = ["org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"]
+    project.ext.springbootsecurity = ["org.springframework.boot:spring-boot-starter-security:${springBootVersion}"]
+    project.ext.springbootactuator = ["org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"]
+    project.ext.jjwt = [
+            "io.jsonwebtoken:jjwt-api:0.11.5",
+            "io.jsonwebtoken:jjwt-impl:0.11.5",
+            "io.jsonwebtoken:jjwt-jackson:0.11.5"
+    ]
+    project.ext.db = ["com.oracle.database.jdbc:ojdbc11:23.3.0.23.09"]
+    project.ext.h2 = ['com.h2database:h2:2.2.224']
 
     // Se excluye JUnit 4
     configurations {
@@ -54,11 +87,11 @@ allprojects {
     project.ext.springdoc = [
             "org.springdoc:springdoc-openapi-ui:1.6.8",
     ]
+
+    configureJavaToolchain(project)
 }
 
-group = 'com.asociados.cope'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+group = 'com.alediesme.joyeria'
 
 repositories {
     mavenCentral()
@@ -70,13 +103,35 @@ dependencies {
         compile.exclude module: 'spring-boot-starter-tomcat'
     }
 
-    runtimeOnly project.ext.springdevtools
+    implementation project.ext.springbootactuator
+    implementation project.ext.springbootjdbc
 
-    implementation project.ext.springbootundertow
     implementation project(':infrastructure')
+
     implementation project.ext.springbootweb
+
+    implementation "org.springframework.boot:spring-boot-starter-logging:${springBootVersion}"
+
+    runtimeOnly project.ext.db
+
+
+    testImplementation project.ext.springboottest
+    testImplementation project.ext.springbootjdbc
+    testRuntimeOnly project.ext.h2
+}
+
+test {
+    useJUnitPlatform()
 }
 
 bootJar {
+    archiveFileName = 'alediesme.jar'
+}
 
+bootWar {
+    archiveFileName = 'alediesme.war'
+}
+
+tasks.named('war') {
+    enabled = false
 }
